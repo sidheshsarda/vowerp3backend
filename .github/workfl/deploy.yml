@@ -1,0 +1,30 @@
+name: Deploy Python App to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ubuntu
+        key: ${{ secrets.AWS_SSH_KEY }}
+        script: |
+          docker pull python:3.9-slim
+          mkdir -p ~/python-deploy
+          cd ~/python-deploy
+          git pull origin main || git clone https://github.com/your-username/python-deploy.git .
+          docker build -t python-app .
+          docker stop python-app || true
+          docker rm python-app || true
+          docker run -d -p 5004:5004 --name python-app python-app
