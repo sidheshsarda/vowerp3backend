@@ -47,7 +47,7 @@ def get_purchase_orders():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/POsavess")
+@router.post("/POsavesss")
 def save_purchase_order(order_number: str, supplier: str, amount: float):
     try:
         connection = get_db_connection()
