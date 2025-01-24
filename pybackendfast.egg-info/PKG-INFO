@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: pybackendfast
+Version: 1.0.0
+Summary: A Python FastAPI backend for Inventory, HRMS, and Accounts
+Home-page: https://your-repository-url.com
+Author: Your Name
+Author-email: your.email@example.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: mysql-connector-python
+Requires-Dist: python-dotenv

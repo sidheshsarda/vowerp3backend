@@ -1,0 +1,14 @@
+README.md
+setup.py
+accounts/__init__.py
+accounts/routes.py
+hrms/__init__.py
+hrms/routes.py
+inventory/__init__.py
+inventory/routes.py
+pybackendfast.egg-info/PKG-INFO
+pybackendfast.egg-info/SOURCES.txt
+pybackendfast.egg-info/dependency_links.txt
+pybackendfast.egg-info/entry_points.txt
+pybackendfast.egg-info/requires.txt
+pybackendfast.egg-info/top_level.txt
