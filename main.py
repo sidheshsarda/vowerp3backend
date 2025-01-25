@@ -10,18 +10,9 @@ from accounts.routes import router as accounts_router
 from authorization.routes import router as authorization_router
 from doffing.routes import router as doffing_router
 from master.routes import router as master_router
-from spreader.routes import router as spreader_router
-
 
 # Initialize FastAPI app
-#app = FastAPI()
-
-
-app = FastAPI(
-    title="FastAPI Project with Swagger",
-    description="A sample FastAPI project demonstrating Swagger and token-based authentication.",
-    version="1.0.0",
-)
+app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -43,7 +34,6 @@ app.include_router(hrms_router, prefix="/api/hrms", tags=["HRMS"])
 app.include_router(authorization_router, prefix="/api/authRoutes", tags=["Authorization"])
 app.include_router(doffing_router, prefix="/api/doffRoutes", tags=["Doffing"])
 app.include_router(master_router, prefix="/api/masterRoutes", tags=["Master"])
-app.include_router(spreader_router, prefix="/api/spreaderRoutes", tags=["Spreader"])
 
 
 

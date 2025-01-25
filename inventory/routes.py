@@ -9,7 +9,7 @@ def get_purchase_orders():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        query = "SELECT * FROM mechine_master where type_of_mechine=8 and company_id=2 order by mech_code"
+        query = "SELECT * FROM assets limit 20"
      
         cursor.execute(query)
         data = cursor.fetchall()
