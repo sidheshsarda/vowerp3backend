@@ -20,7 +20,7 @@ jobs:
         username: ubuntu
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
-          docker pull python:3.9-slim
+          docker pull python:3.12-slim
           mkdir -p ~/python-deploy
           cd ~/python-deploy
           git pull origin main || git clone https://github.com/your-username/python-deploy.git .
