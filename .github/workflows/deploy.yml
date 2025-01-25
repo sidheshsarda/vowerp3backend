@@ -33,7 +33,7 @@ jobs:
 
           # Pull the latest code from GitHub repository
           echo "Pulling latest changes from GitHub"
-          cd ~/python-deploy || (git clone https://github.com/your-username/python-deploy.git ~/python-deploy && cd ~/python-deploy)
+          cd ~/python-deploy || (git clone https://github.com/tarunsadhukhan/python-deploy.git ~/python-deploy && cd ~/python-deploy)
           git pull origin main || git fetch --all && git reset --hard origin/main
           
           # Debugging: Check the contents of the directory after pulling changes
