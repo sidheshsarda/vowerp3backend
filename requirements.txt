@@ -23,7 +23,7 @@ pefile==2023.2.7
 pillow==11.0.0
 pyasn1==0.6.1
 PyAutoGUI==0.9.54
-pybackendfast @ file:///D:/pyproj/pybackendfast/dist/pybackendfast-1.0.0-py3-none-any.whl#sha256=366444dc334a41a85dc7e06c7e04eb29d63dcf515ee6bf2e9c18dd37b851d5d0
+#pybackendfast @ file:///D:/pyproj/pybackendfast/dist/pybackendfast-1.0.0-py3-none-any.whl#sha256=366444dc334a41a85dc7e06c7e04eb29d63dcf515ee6bf2e9c18dd37b851d5d0
 pydantic==2.10.4
 pydantic_core==2.27.2
 PyGetWindow==0.0.9
