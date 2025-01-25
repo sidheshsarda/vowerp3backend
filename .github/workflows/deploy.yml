@@ -11,7 +11,7 @@ jobs:
         echo "Checking repository contents..."
         ls -la
         echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-        echo "Latest commit: $(git log -1 --oneline)"
+        echo "Lat st commit: $(git log -1 --oneline)"
 
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v0.1.10
