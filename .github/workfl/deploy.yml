@@ -20,11 +20,14 @@ jobs:
         username: ubuntu
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
+
           docker pull python:3.12-slim
-          mkdir -p ~/python-deploy
-          cd ~/python-deploy
-          git pull origin main || git clone https://github.com/your-username/python-deploy.git .
+        #  mkdir -p ~/python-deploy
+         cd ~/python-deploy || (git clone https://github.com/your-username/python-deploy.git ~/python-deploy && cd ~/python-deploy)
+         git pull origin main || git fetch --all && git reset --hard origin/main
           docker build -t python-app .
           docker stop python-app || true
           docker rm python-app || true
           docker run -d -p 5004:5004 --name python-app python-app
+
+ 
