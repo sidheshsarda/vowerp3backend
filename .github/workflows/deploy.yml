@@ -29,7 +29,7 @@ jobs:
       # Step 4: Push Docker Image to Registry
       - name: Push Docker Image
         run: |
-          docker push your-docker-repo/python-app:latest
+          docker push tarunsadhukhan2/pybackendfast:latest
 
       # Step 5: Deploy to AWS EC2
       - name: Deploy to AWS EC2
