@@ -24,7 +24,7 @@ jobs:
       # Step 3: Build Docker Image
       - name: Build Docker Image
         run: |
-          docker build -t your-docker-repo/python-app:latest .
+          docker build -t tarunksadhukhan2/pybackendfast:latest .
 
       # Step 4: Push Docker Image to Registry
       - name: Push Docker Image
