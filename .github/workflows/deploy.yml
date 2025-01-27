@@ -42,5 +42,5 @@ jobs:
           docker pull tarunksadhukhan2/pybackendfast:latest
           docker stop python-app || true
           docker rm python-app || true
-          docker run -d --name python-app -p 5005:5005 tarunksadhukhan2/pybackupfast:latest
+          docker run -d --name python-app -p 5005:5004 tarunksadhukhan2/pybackupfast:latest
           EOF
