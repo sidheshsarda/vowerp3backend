@@ -38,9 +38,11 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i $EC2_SSH_KEY $EC2_USER@$EC2_HOST <<EOF
-          docker pull tarunksadhukhan2/pybackendfast:latest
-          docker stop python-app || true
-          docker rm python-app || true
-          docker run -d --name python-app -p 5005:5004 tarunksadhukhan2/pybackupfast:latest
+          echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
+          chmod 600 private-key.pem
+          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+            docker pull tarunksadhukhan2/pybackendfast:latest
+            docker stop python-app || true
+            docker rm python-app || true
+            docker run -d --name python-app -p 5005:5004 tarunksadhukhan2/pybackendfast:latest
           EOF

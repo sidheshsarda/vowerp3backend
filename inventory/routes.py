@@ -9,7 +9,7 @@ def get_purchase_orders():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        query = "SELECT comp_id,company_name FROM company_master limit 51"
+        query = "SELECT comp_id,company_name FROM company_master limit 1"
      
         cursor.execute(query)
         data = cursor.fetchall()
