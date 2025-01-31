@@ -37,7 +37,7 @@ jobs:
 
     - name: Create ECR Repository if it doesn't exist
         run: |
-          aws ecr describe-repositories --repository-names python-deploy || aws ecr create-repository --repository-name python-deploy
+        aws ecr describe-repositories --repository-names python-deploy || aws ecr create-repository --repository-name python-deploy
 
 
       # Step 5: Build Podman Image
