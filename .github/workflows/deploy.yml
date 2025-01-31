@@ -34,25 +34,27 @@ jobs:
           aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | podman login --username AWS --password-stdin $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
+      # Step 5: Create ECR Repository if it doesn't exist
+      - name: Create ECR Repository if it doesn't exist
+        run: |
+          aws ecr describe-repositories --repository-names python-deploy || aws ecr create-repository --repository-name python-deploy
 
-   
-
-      # Step 5: Build Podman Image
+      # Step 6: Build Podman Image
       - name: Build Podman Image
         run: |
           aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
           podman build -t $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest .
 
-      # Step 6: Push Podman Image to Amazon ECR
+      # Step 7: Push Podman Image to Amazon ECR
       - name: Push Podman Image
         run: |
           aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
           podman push $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest
 
-      # Step 7: Update ECS Service
+      # Step 8: Update ECS Service
       - name: Update ECS Service
         run: |
           aws ecs update-service \
-             --cluster vowerp3backend \
+            --cluster pybackend-cluster \
             --service pybackend-service \
             --force-new-deployment
