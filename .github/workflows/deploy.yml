@@ -35,10 +35,7 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | podman login --username AWS --password-stdin $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
 
-    - name: Create ECR Repository if it doesn't exist
-        run: |
-        aws ecr describe-repositories --repository-names python-deploy || aws ecr create-repository --repository-name python-deploy
-
+   
 
       # Step 5: Build Podman Image
       - name: Build Podman Image
