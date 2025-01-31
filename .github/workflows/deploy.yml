@@ -38,13 +38,13 @@ jobs:
       - name: Build Podman Image
         run: |
           aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
-          podman build -t $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/pybackendfast:latest .
+          podman build -t $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest .
 
       # Step 6: Push Podman Image to Amazon ECR
       - name: Push Podman Image
         run: |
           aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
-          podman push $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/pybackendfast:latest
+          podman push $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest
 
       # Step 7: Update ECS Service
       - name: Update ECS Service
