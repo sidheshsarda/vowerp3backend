@@ -50,6 +50,6 @@ jobs:
       - name: Update ECS Service
         run: |
           aws ecs update-service \
-            --cluster pybackend-cluster \
+             --cluster vowerp3backend \
             --service pybackend-service \
             --force-new-deployment
