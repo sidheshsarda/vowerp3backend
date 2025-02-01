@@ -63,4 +63,5 @@ jobs:
           aws ecs update-service \
             --cluster vowerp3backend \
             --service pybackend-service \
+            --task-definition vowbackendtask:2 \
             --force-new-deployment
