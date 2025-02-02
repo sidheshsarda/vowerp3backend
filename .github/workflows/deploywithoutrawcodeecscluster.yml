@@ -26,9 +26,8 @@ jobs:
       - name: Log in to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v1
-
   
- 
+
   
  
       # Step 5: Build Docker Image
