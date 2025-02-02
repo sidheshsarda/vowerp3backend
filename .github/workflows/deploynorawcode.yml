@@ -24,12 +24,12 @@ jobs:
       # Step 3: Build Docker Image
       - name: Build Docker Image
         run: |
-          docker build -t tarunksadhukhan/python_deploy:latest .
+          docker build -t tarunksadhukhan2/python_deploy:latest .
 
       # Step 4: Push Docker Image to Registry
       - name: Push Docker Image
         run: |
-          docker push tarunksadhukhan/python-deploy:latest
+          docker push tarunksadhukhan2/python-deploy:latest
 
       # Step 5: Deploy to AWS EC2
       - name: Deploy to AWS EC2
@@ -41,8 +41,8 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
           chmod 600 private-key.pem
           ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            docker pull tarunksadhukhan/python_deploy:latest
+            docker pull tarunksadhukhan2/python_deploy:latest
             docker stop python-app || true
             docker rm python-app || true
-            docker run -d --name python-app -p 5005:5004 tarunksadhukhan/python-deploy:latest
+            docker run -d --name python-app -p 5005:5004 tarunksadhukhan2/python-deploy:latest
           EOF
