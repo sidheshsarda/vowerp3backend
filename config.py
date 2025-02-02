@@ -6,7 +6,7 @@ load_dotenv()
 
 class Config:
     DEBUG = os.getenv("FLASK_DEBUG", "False") == "True"
-    PORT = int(os.getenv("FLASK_PORT", 5003))
+    PORT = int(os.getenv("FLASK_PORT", 5004))
     HOST = "0.0.0.0"
 
     # Database configuration
