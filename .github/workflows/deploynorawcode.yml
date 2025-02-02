@@ -36,17 +36,18 @@ jobs:
           docker push tarunksadhukhan2/python-deploy:latest  # ✅ Fixed: Now matches the build tag
 
       # Step 6: Deploy to AWS EC2
-      - name: Deploy to AWS EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
-          chmod 600 private-key.pem
-          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            docker pull tarunksadhukhan2/python-deploy:latest
-            docker stop python-app || true
-            docker rm python-app || true
-            docker run -d --name python-app -p 5005:5004 tarunksadhukhan2/python-deploy:latest
-          EOF
+   name: Deploy to AWS EC2
+  env:
+    EC2_HOST: ${{ secrets.EC2_HOST }}
+    EC2_USER: ${{ secrets.EC2_USER }}
+    EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  run: |
+    echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
+    chmod 600 private-key.pem
+    ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+      sudo systemctl restart docker  # 🔥 Add this line to ensure Docker is running
+      docker pull tarunksadhukhan2/python-deploy:latest
+      docker stop python-app || true
+      docker rm python-app || true
+      docker run -d --name python-app -p 5005:5004 tarunksadhukhan2/python-deploy:latest
+    EOF
