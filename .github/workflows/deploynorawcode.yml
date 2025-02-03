@@ -1,9 +1,9 @@
-name: Build and Deploy to AWS EC2
+name: Build and Deploy Docker Image
 
 on:
   push:
     branches:
-      - main  # Runs on every push to main
+      - main  # Adjust if needed
 
 jobs:
   build-and-deploy:
@@ -21,41 +21,34 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 3: Build Docker Image
-      - name: Build Docker Image
+      # Step 3: Build and Push Docker Image
+      - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/python-deploy:latest .
+          docker build -t your-dockerhub-username/python-deploy:latest .
+          docker push your-dockerhub-username/python-deploy:latest
 
-      # Step 4: Push Docker Image to Docker Hub
-      - name: Push Docker Image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/python-deploy:latest
-
-      # Step 5: Deploy to AWS EC2
+      # Step 4: Deploy on AWS EC2
       - name: Deploy to AWS EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_USER: ubuntu
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
           chmod 600 private-key.pem
           ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            # Install Docker if not installed
-            if ! command -v docker &> /dev/null
-            then
-                sudo apt update
-                sudo apt install -y docker.io
-                sudo systemctl start docker
-                sudo systemctl enable docker
-                sudo usermod -aG docker \$USER
+            # Ensure Docker is installed
+            if ! command -v docker &> /dev/null; then
+              sudo apt update
+              sudo apt install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ubuntu
             fi
-
-            # Stop and remove old container if exists
+            
+            # Pull latest image and restart container
+            docker pull your-dockerhub-username/python-deploy:latest
             docker stop python-app || true
             docker rm python-app || true
-
-            # Pull and run the new container
-            docker pull ${{ secrets.DOCKER_USERNAME }}/python-deploy:latest
-            docker run -d --name python-app -p 80:5000 ${{ secrets.DOCKER_USERNAME }}/python-deploy:latest
+            docker run -d --name python-app -p 80:5004 your-dockerhub-username/python-deploy:latest
           EOF
