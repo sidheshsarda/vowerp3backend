@@ -30,7 +30,8 @@ jobs:
           fi
 
 
-    
+       - name: Verify AWS Authentication
+        run: aws sts get-caller-identity
 
       # Step 3: Log in to AWS ECR (using AWS CLI)
       - name: Log in to AWS ECR
@@ -50,34 +51,51 @@ jobs:
           docker push ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
 
   
+- name: Deploy to AWS EC2
+  env:
+    EC2_HOST: ${{ secrets.EC2_HOST }}
+    EC2_USER: ubuntu
+    EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  run: |
+    echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
+    chmod 600 private-key.pem
 
-      # Step 5: Deploy to AWS EC2 (SSH to EC2 and pull Docker image)
-      - name: Deploy to AWS EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ubuntu
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
-          chmod 600 private-key.pem
-          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            # Ensure Docker is installed
-            if ! command -v docker &> /dev/null; then
-              sudo apt update
-              sudo apt install -y unzip curl
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              sudo ./aws/install --update
-              sudo systemctl start docker
-              sudo systemctl enable docker
-              sudo usermod -aG docker ubuntu
-            fi
+- name: SSH into EC2 and Ensure Docker is Installed
+  run: |
+    ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+      if ! command -v docker &> /dev/null; then
+        sudo apt update
+        sudo apt install -y unzip curl
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --update
+        sudo systemctl start docker
+        sudo systemctl enable docker
+        sudo usermod -aG docker ubuntu
+      fi
+    EOF
 
-            # Log in to AWS ECR from EC2
-     
-            # Pull the latest Docker image and restart the container
-            docker pull ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
-            docker stop python-app || true
-            docker rm python-app || true
-            docker run -d --name python-app -p 5005:5005 ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
-          EOF
+- name: Log in to AWS ECR from EC2
+  run: |
+    ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+      aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
+    EOF
+
+- name: Pull Latest Docker Image on EC2
+  run: |
+    ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+      docker pull ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
+    EOF
+
+- name: Stop and Remove Existing Docker Container
+  run: |
+    ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+      docker stop python-app || true
+      docker rm python-app || true
+    EOF
+
+- name: Run the Updated Docker Container
+  run: |
+    ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+      docker run -d --name python-app -p 5005:5005 ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
+    EOF
