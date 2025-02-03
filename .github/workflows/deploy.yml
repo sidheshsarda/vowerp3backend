@@ -9,6 +9,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+
+        aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 776929205174.dkr.ecr.eu-north-1.amazonaws.com
+
+
     steps:
       # Step 1: Checkout code
       - name: Checkout code
@@ -45,8 +49,7 @@ jobs:
           docker build -t ${{ secrets.AWS_ECR_URL }}/python-deploy:latest .
           docker push ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
 
-          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 776929205174.dkr.ecr.eu-north-1.amazonaws.com
-
+  
 
       # Step 5: Deploy to AWS EC2 (SSH to EC2 and pull Docker image)
       - name: Deploy to AWS EC2
