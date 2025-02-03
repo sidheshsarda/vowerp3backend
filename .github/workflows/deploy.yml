@@ -1,9 +1,9 @@
-name: Build and Deploy to AWS ECS using Podman
+name: Build and Deploy to Amazon ECR
 
 on:
   push:
     branches:
-      - main
+      - main  # Adjust if needed
 
 jobs:
   build-and-deploy:
@@ -14,54 +14,50 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install Podman
-      - name: Install Podman
+      # Step 2: Set up AWS CLI and Podman
+      - name: Set up AWS CLI and Podman
         run: |
           sudo apt update
-          sudo apt install -y podman
+          sudo apt install -y awscli podman
 
-      # Step 3: Configure AWS Credentials
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      # Step 4: Log in to Amazon ECR using Podman
+      # Step 3: Log in to Amazon ECR
       - name: Log in to Amazon ECR
         run: |
-          aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | podman login --username AWS --password-stdin $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | podman login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
 
-      # Step 5: Create ECR Repository if it doesn't exist
-      - name: Create ECR Repository if it doesn't exist
+      # Step 4: Build Docker Image using Podman
+      - name: Build Docker Image using Podman
         run: |
-          aws ecr describe-repositories --repository-names python-deploy || aws ecr create-repository --repository-name python-deploy
+          podman build -t ${{ secrets.AWS_ECR_URL }}/python-deploy:latest .
 
-      # Step 6: Build Podman Image
-      - name: Build Podman Image
+      # Step 5: Push Docker Image to Amazon ECR
+      - name: Push Docker Image to Amazon ECR
         run: |
-          aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
-          podman build -t $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest .
+          podman push ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
 
-      # Step 7: Push Podman Image to Amazon ECR
-     
-
-
-
-      - name: Build Podman Image with Debugging
+      # Step 6: Deploy to AWS EC2
+      - name: Deploy to AWS EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ubuntu
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
-          podman build -t $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest . | tee build.log
-          cat build.log
-
-
-      # Step 8: Update ECS Service
-      - name: Update ECS Service
-        run: |
-          aws ecs update-service \
-            --cluster vowerp3backend \
-            --service pybackend-service \
-            --task-definition vowbackendtask:1 \
-            --force-new-deployment
+          echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
+          chmod 600 private-key.pem
+          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
+            # Ensure Docker is installed
+            if ! command -v podman &> /dev/null; then
+              sudo apt update
+              sudo apt install -y podman
+            fi
+            
+            # Pull the latest image from ECR
+            podman pull ${{ secrets.AWS_ECR_URL }}/pyhon-deploy:latest
+            
+            # Stop and remove any existing container
+            podman stop python-app || true
+            podman rm python-app || true
+            
+            # Run the container with the pulled image
+            podman run -d --name python-deploy -p 80:5005 ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
+          EOF
