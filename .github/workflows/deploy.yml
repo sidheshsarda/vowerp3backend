@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
 
-        aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 776929205174.dkr.ecr.eu-north-1.amazonaws.com
-
+  
 
     steps:
       # Step 1: Checkout code
@@ -32,6 +31,10 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install --update
           fi
+
+
+      aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 776929205174.dkr.ecr.eu-north-1.amazonaws.com
+
 
       # Step 3: Log in to AWS ECR (using AWS CLI)
       - name: Log in to AWS ECR
