@@ -68,7 +68,7 @@ jobs:
             fi
 
             # Log in to AWS ECR from EC2
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
+         #   aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
 
             # Pull the latest Docker image and restart the container
             docker pull ${{ secrets.AWS_ECR_URL }}/python-deploy:latest

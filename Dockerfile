@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 5005
 
 # Start the FastAPI server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5005"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5004"]
