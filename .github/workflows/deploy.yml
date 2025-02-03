@@ -42,8 +42,8 @@ jobs:
       # Step 4: Build and Push Docker Image to AWS ECR
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.AWS_ECR_URL }}/python-deploy:latest .
-          docker push ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
+          docker build -t ${{ secrets.AWS_ECR_URL }}/:latest .
+          docker push ${{ secrets.AWS_ECR_URL }}/:latest
 
       # Step 5: Deploy to AWS EC2 (SSH to EC2 and pull Docker image)
       - name: Deploy to AWS EC2
@@ -71,8 +71,8 @@ jobs:
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
 
             # Pull the latest Docker image and restart the container
-            docker pull ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
+            docker pull ${{ secrets.AWS_ECR_URL }}/:latest
             docker stop python-app || true
             docker rm python-app || true
-            docker run -d --name python-app -p 80:5004 ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
+            docker run -d --name python-app -p 80:5004 ${{ secrets.AWS_ECR_URL }}/:latest
           EOF
