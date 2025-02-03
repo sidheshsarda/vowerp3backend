@@ -1,0 +1,67 @@
+name: Build and Deploy to AWS ECS using Podman
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Install Podman
+      - name: Install Podman
+        run: |
+          sudo apt update
+          sudo apt install -y podman
+
+      # Step 3: Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Step 4: Log in to Amazon ECR using Podman
+      - name: Log in to Amazon ECR
+        run: |
+          aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | podman login --username AWS --password-stdin $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+      # Step 5: Create ECR Repository if it doesn't exist
+      - name: Create ECR Repository if it doesn't exist
+        run: |
+          aws ecr describe-repositories --repository-names python-deploy || aws ecr create-repository --repository-name python-deploy
+
+      # Step 6: Build Podman Image
+      - name: Build Podman Image
+        run: |
+          aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
+          podman build -t $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest .
+
+      # Step 7: Push Podman Image to Amazon ECR
+     
+
+
+
+      - name: Build Podman Image with Debugging
+        run: |
+          aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
+          podman build -t $aws_account_id.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/python-deploy:latest . | tee build.log
+          cat build.log
+
+
+      # Step 8: Update ECS Service
+      - name: Update ECS Service
+        run: |
+          aws ecs update-service \
+            --cluster vowerp3backend \
+            --service pybackend-service \
+            --task-definition vowbackendtask:1 \
+            --force-new-deployment
