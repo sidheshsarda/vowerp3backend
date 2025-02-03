@@ -73,5 +73,5 @@ jobs:
             docker pull ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
             docker stop python-app || true
             docker rm python-app || true
-            docker run -d --name python-app -p 80:5004 ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
+            docker run -d --name python-app -p 5004:5004 ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
           EOF
