@@ -14,13 +14,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install AWS CLI
-      - name: Install AWS CLI
+      # Step 2: Install or update AWS CLI if needed
+      - name: Install or Update AWS CLI
         run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-          
+          if ! command -v aws &> /dev/null; then
+            echo "AWS CLI not found, installing..."
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+          else
+            echo "AWS CLI is already installed, updating..."
+            sudo ./aws/install --update
+          fi
+
       # Step 3: Log in to AWS ECR (using AWS CLI)
       - name: Log in to AWS ECR
         run: |
@@ -49,7 +55,7 @@ jobs:
               sudo apt install -y unzip curl
               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
               unzip awscliv2.zip
-              sudo ./aws/install
+              sudo ./aws/install --update
               sudo systemctl start docker
               sudo systemctl enable docker
               sudo usermod -aG docker ubuntu
