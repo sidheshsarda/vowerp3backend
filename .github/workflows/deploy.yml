@@ -1,91 +1,118 @@
-name: Build and Deploy Docker Image to AWS ECR
+name: Deploy
 
 on:
   push:
     branches:
-      - main  # Adjust if needed
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
 
 jobs:
-  build-and-deploy:
+  test-and-deploy-dev:
+    if: github.ref == 'refs/heads/dev' || (github.event_name == 'pull_request' && github.base_ref == 'dev')
     runs-on: ubuntu-latest
-
     steps:
       # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install or update AWS CLI if needed
-      - name: Install or Update AWS CLI
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12-slim'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
         run: |
-          if ! command -v aws &> /dev/null; then
-            echo "AWS CLI not found, installing..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-          else
-            echo "AWS CLI is already installed, updating..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install --update
-          fi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      # Step 3: Verify AWS Authentication
-      - name: Verify AWS Authentication
-        run: aws sts get-caller-identity
+      # Step 4: Build Docker image
+      - name: Build Docker image
+        run: docker build -t python-deploy .
 
-      # Step 4: Log in to AWS ECR (using AWS CLI)
-      - name: Log in to AWS ECR
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      # Step 5: setup AWS credentials
+      - name: Setup AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+        
+      # Step 6: Login to AWS ECR
+      - name: Login to AWS ECR
+        run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
+
+      # Step 7: Tag and push docker image
+      - name: Tag and push docker image
         run: |
-          aws --version  # Check if AWS CLI is installed
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
+          docker tag python-deploy-dev:latest ${{ secrets.AWS_ECR_URL }}/python-deploy-dev:latest
+          docker push ${{ secrets.AWS_ECR_URL }}/python-deploy-dev:latest
 
-      # Step 5: Build and Push Docker Image to AWS ECR
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t ${{ secrets.AWS_ECR_URL }}/python-deploy:latest .
-          docker push ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build-and-deploy
-
-    steps:
+      #step 8: Deploy to AWS EC2
       - name: Deploy to AWS EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ubuntu
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > private-key.pem
-          chmod 600 private-key.pem
+          aws ecs update-service --cluster vowerp3backend-cluster --service vowerp3backend-dev-service --force-new-deployment
 
-   
-
-      - name: Log in to AWS ECR from EC2
+      #step 9: Test Application Availability
+      - name: Test Application Availability
         run: |
-          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
-          EOF
+          curl http://ec2-3-8-116-0.eu-west-2.compute.amazonaws.com:5005 || exit 1
+      
+  test-and-deploy-main:
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Pull Latest Docker Image on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            docker pull ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
-          EOF
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12-slim'
 
-      - name: Stop and Remove Existing Docker Container
+      # Step 3: Install dependencies
+      - name: Install dependencies
         run: |
-          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            docker stop python-app || true
-            docker rm python-app || true
-          EOF
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run the Updated Docker Container
+      # Step 4: Build Docker image
+      - name: Build Docker image
+        run: docker build -t python-deploy .
+
+      # Step 5: setup AWS credentials
+      - name: Setup AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+        
+      # Step 6: Login to AWS ECR
+      - name: Login to AWS ECR
+        run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URL }}
+
+      # Step 7: Tag and push docker image
+      - name: Tag and push docker image
         run: |
-          ssh -o StrictHostKeyChecking=no -i private-key.pem $EC2_USER@$EC2_HOST <<EOF
-            docker run -d --name python-app -p 5005:5005 ${{ secrets.AWS_ECR_URL }}/python-deploy:latest
-          EOF
+          docker tag python-deploy-main:latest ${{ secrets.AWS_ECR_URL }}/python-deploy-main:latest
+          docker push ${{ secrets.AWS_ECR_URL }}/python-deploy-main:latest
+
+      #step 8: Deploy to AWS EC2
+      - name: Deploy to AWS EC2
+        run: |
+          aws ecs update-service --cluster vowerp3backend-cluster --service vowerp3backend-main-service --force-new-deployment
+
+      #step 9: Test Application Availability
+      - name: Test Application Availability
+        run: |
+          curl http://ec2-3-8-116-0.eu-west-2.compute.amazonaws.com:5005 || exit 1
+      
+
